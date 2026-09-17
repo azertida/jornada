@@ -21,7 +21,7 @@
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
-  background:var(--bg); color:var(--text);
+  background:var(--bg); color:var(--text); overflow-x:hidden;
   font:400 16px/1.5 'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
   -webkit-text-size-adjust:100%;
   padding-bottom:calc(74px + env(safe-area-inset-bottom));
@@ -69,12 +69,12 @@ button{cursor:pointer}
 .day-badge.positive{color:var(--green)}
 .day-badge.negative{color:var(--red)}
 .day-badge.neutral{color:var(--muted)}
-.day-inputs{display:flex;align-items:flex-end;gap:7px;flex-wrap:wrap;margin-top:10px}
-.grp{display:flex;flex-direction:column;gap:3px}
+.day-inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.grp{display:flex;flex-direction:column;gap:3px;min-width:0}
 .grp label{font-size:10.5px;color:var(--muted)}
+.grp input[type="text"]{min-width:0}
 .grp input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
-  padding:8px 9px;font-family:'Space Mono',monospace;font-size:15px;min-width:92px}
-.sep{color:var(--muted);padding-bottom:9px}
+  padding:8px 9px;font-family:'Space Mono',monospace;font-size:15px;width:100%;min-width:0}
 .day-foot{font-size:12.5px;color:var(--muted);margin-top:9px}
 
 .champ{margin-bottom:14px}
@@ -198,7 +198,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.
         <select id="modeSaisie">
           <option value="4champs">Début, pause, reprise, fin — la pause se déduit d'elle-même</option>
           <option value="2champs-pause">Arrivée et départ, avec une pause déduite</option>
-          <option value="2champs-sans">Arrivée et départ, sans déduction</option>
+          <option value="2champs-sans">Arrivée et départ, pas de pause à déduire</option>
         </select>
       </div>
       <div class="champ" id="champPause" hidden>
@@ -240,7 +240,7 @@ input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.
           <label for="etePause">Pause en été</label>
           <select id="etePause">
             <option value="meme">Comme le reste de l'année</option>
-            <option value="sans">Sans pause déduite</option>
+            <option value="sans">Pas de pause à déduire</option>
           </select>
         </div>
       </div>
@@ -275,6 +275,16 @@ input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.
       <button class="btn creux" id="importer">Importer une sauvegarde</button>
       <input type="file" id="fichierImport" accept=".json,application/json" style="display:none">
       <button class="btn creux" id="revoirGuide">Revoir le guide de départ</button>
+    </div>
+
+    <h2 class="suite">Nettoyage</h2>
+    <div class="carte">
+      <div class="champ">
+        <label for="purgeDate">Supprimer les journées antérieures au</label>
+        <input type="text" id="purgeDate" placeholder="14/09/2026">
+        <div class="aide">Tes réglages et les journées à partir de cette date sont conservés.</div>
+      </div>
+      <button class="btn rouge" id="purger">Supprimer ces journées</button>
     </div>
   </section>
 
@@ -456,6 +466,20 @@ function jourMoisVersTexte(jm){
   return m ? m[2]+"/"+m[1] : "";
 }
 
+/* Insère les / au fil de la frappe dans les champs de date */
+function masqueDate(input, avecAnnee){
+  input.setAttribute("inputmode","numeric");
+  input.addEventListener("input", ()=>{
+    const pos = input.selectionStart === input.value.length;
+    let d = input.value.replace(/\D/g,"").slice(0, avecAnnee ? 8 : 4);
+    let v = d.slice(0,2);
+    if(d.length > 2) v += "/" + d.slice(2,4);
+    if(avecAnnee && d.length > 4) v += "/" + d.slice(4,8);
+    input.value = v;
+    if(pos) input.setSelectionRange(v.length, v.length);
+  });
+}
+
 let minuteur;
 function dire(texte){
   const el = document.getElementById("msg");
@@ -631,22 +655,15 @@ function remplirChamps(conteneur, date){
     g.appendChild(l); g.appendChild(i);
     return g;
   };
-  const sep = t =>{ const s = document.createElement("span"); s.className="sep"; s.textContent=t; return s; };
-
   if(mode === "4champs"){
     conteneur.appendChild(champ("Début","am_start"));
-    conteneur.appendChild(sep("↔"));
     conteneur.appendChild(champ("Pause","am_end"));
-    conteneur.appendChild(sep("·"));
     conteneur.appendChild(champ("Reprise","pm_start"));
-    conteneur.appendChild(sep("↔"));
     conteneur.appendChild(champ("Fin","pm_end"));
   }else{
     conteneur.appendChild(champ("Arrivée","debut"));
-    conteneur.appendChild(sep("↔"));
     conteneur.appendChild(champ("Départ","fin"));
     if(mode === "2champs-pause"){
-      conteneur.appendChild(sep("−"));
       conteneur.appendChild(champ("Pause","pause","text"));
     }
   }
@@ -926,6 +943,22 @@ document.getElementById("xRepartir").onclick = ()=>{
   repartirEgalement(brouillon.jours, brouillon.repartition, brouillon.volume);
   rendreChampsException(); dire("Répartition égalisée.");
 };
+["xDebut","xFin"].forEach(id=> masqueDate(document.getElementById(id), true));
+["eteDebut","eteFin"].forEach(id=> masqueDate(document.getElementById(id), false));
+
+masqueDate(document.getElementById("purgeDate"), true);
+document.getElementById("purger").onclick = ()=>{
+  const limite = texteVersDate(document.getElementById("purgeDate").value);
+  if(!limite){ dire("Date attendue au format 14/09/2026."); return; }
+  const vises = Object.keys(etat.jours).filter(k => k < limite);
+  if(!vises.length){ dire("Aucune journée antérieure à cette date."); return; }
+  if(!confirm("Supprimer définitivement " + vises.length + " journée(s) antérieure(s) au "
+              + dateVersTexte(limite) + " ? Tes réglages sont conservés.")) return;
+  vises.forEach(k => delete etat.jours[k]);
+  sauver(); rendreSemaine();
+  dire(vises.length + " journée(s) supprimée(s).");
+};
+
 document.getElementById("nouvelleException").onclick = ()=> ouvrirException(null);
 document.getElementById("xAnnuler").onclick = fermerFeuilles;
 
