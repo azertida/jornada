@@ -560,67 +560,48 @@ let decalage = 0;
 
 function lundiAffiche(){ return plusJours(lundiDe(new Date()), decalage*7); }
 
-function rendreSemaine(){
-  const lundi = lundiAffiche();
-  const vendredi = plusJours(lundi, 4);
-  const today = new Date(); today.setHours(0,0,0,0);
-
-  document.getElementById("weekLabel").textContent =
-    "Sem. du " + jjmm(lundi) + " au " + jjmm(vendredi);
-  const suiv = document.getElementById("nextWeek");
-  suiv.disabled = decalage >= 0;
-
-  // bandeau régime particulier
-  const r = regimeDe(lundi);
-  document.getElementById("bandeauRegime").innerHTML =
-    r.nom ? `<div class="bandeau">${r.nom}</div>` : "";
-
-  const grille = document.getElementById("daysGrid");
-  grille.innerHTML = "";
-
-  let preste = 0, attendu = 0, attenduEcoule = 0, presteEcoule = 0;
-
+/* Jours à afficher pour une semaine donnée */
+function joursSemaine(lundi){
+  const out = [];
   OUVRES.forEach((dow, i)=>{
     const d = plusJours(lundi, i);
     const ref = referenceDe(d);
-    const journee = etat.jours[cle(d)];
-    if(ref === 0 && !journee) return;          // jour non presté et rien d'encodé
-
-    const k = cle(d);
-    const futur = d > today;
-    const aujourdhui = d.getTime() === today.getTime();
-    const {total, pause, saisi} = calcJour(d);
-
-    attendu += ref;
-    preste += total;
-    if(!futur){ attenduEcoule += ref; presteEcoule += total; }
-
-    const ligne = document.createElement("div");
-    ligne.className = "day-row" + (aujourdhui ? " today" : "") + (futur ? " future" : "");
-
-    const ecart = total - ref;
-    const badge = saisi ? `<span class="day-badge ${ecart>=0?"positive":"negative"}">${minsVersTexte(ecart,true)}</span>`
-                        : `<span class="day-badge neutral">—:—</span>`;
-
-    ligne.innerHTML = `<div class="day-head">
-        <div><span class="day-name">${JOURS_COURTS[d.getDay()]}</span>
-        <span class="day-date">${jjmm(d)}</span></div>${badge}</div>
-      <div class="day-inputs" data-cle="${k}"></div>
-      <div class="day-foot">${
-        saisi ? "Presté " + minsVersTexte(total,false)
-                + (pause ? " · pause déduite " + minsVersTexte(pause,false) : "")
-                + " · référence " + minsVersTexte(ref,false)
-              : "Référence " + minsVersTexte(ref,false)
-      }</div>`;
-
-    remplirChamps(ligne.querySelector(".day-inputs"), d);
-    grille.appendChild(ligne);
+    if(ref === 0 && !etat.jours[cle(d)]) return;   // jour non presté et rien d'encodé
+    out.push({d, ref});
   });
+  return out;
+}
 
-  if(!grille.children.length){
-    grille.innerHTML = `<div class="vide"><strong>Aucun jour presté cette semaine</strong>
-      Vérifie tes jours prestés dans Réglages.</div>`;
-  }
+function texteFoot(d, ref){
+  const {total, pause, saisi} = calcJour(d);
+  return saisi
+    ? "Presté " + minsVersTexte(total,false)
+      + (pause ? " · pause déduite " + minsVersTexte(pause,false) : "")
+      + " · référence " + minsVersTexte(ref,false)
+    : "Référence " + minsVersTexte(ref,false);
+}
+
+/* Met à jour une seule ligne, sans reconstruire les champs :
+   sinon le sélecteur d'heure se referme à chaque tour de roulette. */
+function majLigne(d, ref, ligne){
+  const {total, saisi} = calcJour(d);
+  const badge = ligne.querySelector(".day-badge");
+  const ecart = total - ref;
+  badge.textContent = saisi ? minsVersTexte(ecart, true) : "—:—";
+  badge.className = "day-badge " + (saisi ? (ecart >= 0 ? "positive" : "negative") : "neutral");
+  ligne.querySelector(".day-foot").textContent = texteFoot(d, ref);
+}
+
+function majResume(){
+  const lundi = lundiAffiche();
+  const today = new Date(); today.setHours(0,0,0,0);
+  let preste = 0, attendu = 0, attenduEcoule = 0, presteEcoule = 0;
+
+  joursSemaine(lundi).forEach(({d, ref})=>{
+    const {total} = calcJour(d);
+    attendu += ref; preste += total;
+    if(d <= today){ attenduEcoule += ref; presteEcoule += total; }
+  });
 
   const reste = Math.max(0, attendu - preste);
   const ecart = presteEcoule - attenduEcoule;
@@ -633,10 +614,52 @@ function rendreSemaine(){
   document.getElementById("sVolume").textContent = minsVersTexte(attendu, false);
 
   rendreReport(lundi, ecart);
+}
+
+function rendreSemaine(){
+  const lundi = lundiAffiche();
+  const vendredi = plusJours(lundi, 4);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  document.getElementById("weekLabel").textContent =
+    "Sem. du " + jjmm(lundi) + " au " + jjmm(vendredi);
+  document.getElementById("nextWeek").disabled = decalage >= 0;
+
+  const r = regimeDe(lundi);
+  document.getElementById("bandeauRegime").innerHTML =
+    r.nom ? `<div class="bandeau">${r.nom}</div>` : "";
+
+  const grille = document.getElementById("daysGrid");
+  grille.innerHTML = "";
+
+  joursSemaine(lundi).forEach(({d, ref})=>{
+    const futur = d > today;
+    const aujourdhui = d.getTime() === today.getTime();
+
+    const ligne = document.createElement("div");
+    ligne.className = "day-row" + (aujourdhui ? " today" : "") + (futur ? " future" : "");
+    ligne.innerHTML = `<div class="day-head">
+        <div><span class="day-name">${JOURS_COURTS[d.getDay()]}</span>
+        <span class="day-date">${jjmm(d)}</span></div>
+        <span class="day-badge neutral">—:—</span></div>
+      <div class="day-inputs"></div>
+      <div class="day-foot"></div>`;
+
+    remplirChamps(ligne.querySelector(".day-inputs"), d, ref, ligne);
+    majLigne(d, ref, ligne);
+    grille.appendChild(ligne);
+  });
+
+  if(!grille.children.length){
+    grille.innerHTML = `<div class="vide"><strong>Aucun jour presté cette semaine</strong>
+      Vérifie tes jours prestés dans Réglages.</div>`;
+  }
+
+  majResume();
   majSousTitre();
 }
 
-function remplirChamps(conteneur, date){
+function remplirChamps(conteneur, date, ref, ligne){
   const k = cle(date);
   const j = etat.jours[k] || {};
   const mode = j.mode || etat.config.saisie;
@@ -659,7 +682,9 @@ function remplirChamps(conteneur, date){
       }else{
         rec[nom] = i.value;
       }
-      sauver(); rendreSemaine();
+      sauver();
+      majLigne(date, ref, ligne);
+      majResume();
     });
     g.appendChild(l); g.appendChild(i);
     return g;
