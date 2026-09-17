@@ -3,7 +3,7 @@
    Les icônes et les polices distantes sont servies depuis le cache.
    Après chaque modification de l'appli, incrémente VERSION. */
 
-const VERSION = "v2";
+const VERSION = "v3";
 const CACHE = "jornada-" + VERSION;
 
 const FICHIERS = [

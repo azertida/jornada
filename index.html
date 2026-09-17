@@ -32,6 +32,8 @@ button{cursor:pointer}
 .mono{font-family:'Space Mono',ui-monospace,monospace}
 
 .app-header{padding:calc(16px + env(safe-area-inset-top)) 18px 14px;border-bottom:1px solid var(--border)}
+.app-header>*,main{max-width:680px;margin-left:auto;margin-right:auto}
+main{display:block}
 .app-title{font-size:20px;font-weight:600;letter-spacing:.01em}
 .app-sub{font-size:13px;color:var(--muted);margin-top:3px}
 
@@ -80,8 +82,13 @@ button{cursor:pointer}
 .champ{margin-bottom:14px}
 .champ label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
 .champ input[type=text],.champ input[type=number],.champ select{
-  width:100%;background:var(--surface2);border:1px solid var(--border);
-  border-radius:10px;padding:11px 12px;font-size:16px}
+  width:100%;max-width:100%;min-width:0;background:var(--surface2);
+  border:1px solid var(--border);border-radius:10px;padding:11px 12px;font-size:16px}
+.champ select{-webkit-appearance:none;appearance:none;text-overflow:ellipsis;
+  background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),
+                   linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:calc(100% - 17px) 50%,calc(100% - 12px) 50%;
+  background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:34px}
 .champ .aide{font-size:12.5px;color:var(--muted);margin-top:5px}
 .carte{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
 .jours{display:flex;gap:6px;flex-wrap:wrap}
@@ -107,7 +114,8 @@ button{cursor:pointer}
 
 nav.onglets{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(15,23,42,.95);
   -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
-  border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);z-index:40}
+  border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);z-index:40;
+  padding-left:max(0px,calc((100% - 680px)/2));padding-right:max(0px,calc((100% - 680px)/2))}
 nav.onglets button{flex:1;background:none;border:0;padding:10px 4px 12px;color:var(--muted);
   font-size:11.5px;display:grid;gap:3px;justify-items:center}
 nav.onglets button .ic{font-size:19px;line-height:1}
@@ -196,11 +204,12 @@ input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.
       <div class="champ">
         <label for="modeSaisie">Comment tu encodes une journée</label>
         <select id="modeSaisie">
-          <option value="4champs">Début, pause, reprise, fin — la pause se déduit d'elle-même</option>
-          <option value="2champs-pause">Arrivée et départ, avec une pause déduite</option>
-          <option value="2champs-sans">Arrivée et départ, pas de pause à déduire</option>
+          <option value="4champs">Début, pause, reprise, fin</option>
+          <option value="2champs-pause">Arrivée et départ, pause déduite</option>
+          <option value="2champs-sans">Arrivée et départ, sans pause</option>
         </select>
       </div>
+      <div class="aide" style="margin:-8px 0 14px">En quatre champs, la pause se calcule à partir de tes heures réelles.</div>
       <div class="champ" id="champPause" hidden>
         <label for="pauseMin">Pause déduite par défaut</label>
         <input type="text" id="pauseMin" placeholder="0:30">
@@ -211,10 +220,10 @@ input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.
     <h2 class="suite">Horaire d'été</h2>
     <div class="carte">
       <div class="champ">
-        <label for="eteActif">Deuxième régime sur une période de l'année</label>
+        <label for="eteActif">Second régime sur une période de l'année</label>
         <select id="eteActif">
-          <option value="non">Pas d'horaire d'été</option>
-          <option value="oui">Horaire d'été actif</option>
+          <option value="non">Aucun</option>
+          <option value="oui">Actif</option>
         </select>
       </div>
       <div id="blocEte" hidden>
@@ -257,9 +266,9 @@ input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.
       <div class="champ">
         <label for="report">Report d'une semaine à l'autre</label>
         <select id="report">
-          <option value="semaine">Le solde repart de zéro chaque semaine</option>
-          <option value="mois">Le solde repart de zéro chaque mois</option>
-          <option value="continu">Le solde se cumule sans remise à zéro</option>
+          <option value="semaine">Remis à zéro chaque semaine</option>
+          <option value="mois">Remis à zéro chaque mois</option>
+          <option value="continu">Cumulé sans remise à zéro</option>
         </select>
       </div>
       <div class="champ">
