@@ -672,7 +672,9 @@ function remplirChamps(conteneur, date, ref, ligne){
     i.type = type || "time";
     i.value = j[nom] || "";
     if(type === "text"){ i.placeholder = "0:30"; i.style.minWidth = "78px"; }
-    i.addEventListener("change", ()=>{
+    // On enregistre à chaque cran de la roulette, mais sans rien réécrire
+    // à l'écran : le moindre remaniement du DOM referme le sélecteur d'heure.
+    const enregistrer = ()=>{
       const rec = etat.jours[k] || (etat.jours[k] = {mode, ref: referenceDe(date)});
       if(typeof rec.ref !== "number") rec.ref = referenceDe(date);
       rec.mode = mode;
@@ -683,9 +685,12 @@ function remplirChamps(conteneur, date, ref, ligne){
         rec[nom] = i.value;
       }
       sauver();
-      majLigne(date, ref, ligne);
-      majResume();
-    });
+    };
+    // L'affichage n'est rafraîchi qu'une fois le champ quitté.
+    const rafraichir = ()=>{ majLigne(date, ref, ligne); majResume(); };
+
+    i.addEventListener("change", enregistrer);
+    i.addEventListener("blur", ()=>{ enregistrer(); rafraichir(); });
     g.appendChild(l); g.appendChild(i);
     return g;
   };
