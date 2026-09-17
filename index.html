@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Jornada</title>
+<meta name="theme-color" content="#0f172a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jornada">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+:root{
+  --bg:#0f172a; --surface:#1e293b; --surface2:#273548; --border:#334155;
+  --accent:#38bdf8; --accent2:#818cf8; --green:#34d399; --red:#f87171;
+  --amber:#fbbf24; --text:#f1f5f9; --muted:#94a3b8; --r:12px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font:400 16px/1.5 'DM Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  -webkit-text-size-adjust:100%;
+  padding-bottom:calc(74px + env(safe-area-inset-bottom));
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:'Space Mono',ui-monospace,monospace}
+
+.app-header{padding:calc(16px + env(safe-area-inset-top)) 18px 14px;border-bottom:1px solid var(--border)}
+.app-title{font-size:20px;font-weight:600;letter-spacing:.01em}
+.app-sub{font-size:13px;color:var(--muted);margin-top:3px}
+
+.zone{padding:16px}
+.zone h2{font-size:14px;font-weight:600;color:var(--muted);margin:0 0 10px;text-transform:none}
+.zone h2.suite{margin-top:26px}
+
+.week-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px 0}
+.nav-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  width:38px;height:38px;border-radius:50%;font-size:17px;line-height:1}
+.nav-btn:disabled{opacity:.3}
+.week-label{font-size:14px;color:var(--muted)}
+
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 6px}
+.summary .item{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 8px;text-align:center}
+.summary .val{font-family:'Space Mono',monospace;font-size:20px;font-weight:700}
+.summary .lbl{font-size:11.5px;color:var(--muted);margin-top:3px}
+.ligne-info{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:11px 14px;font-size:14px;color:var(--muted);margin-bottom:6px;
+  display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ligne-info b{color:var(--text);font-family:'Space Mono',monospace}
+.alerte{border-color:var(--red);color:var(--red)}
+.alerte b{color:var(--red)}
+.bandeau{background:var(--surface2);border:1px solid var(--accent2);border-radius:var(--r);
+  padding:10px 14px;font-size:13.5px;color:var(--text);margin:10px 0}
+
+.day-row{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);
+  padding:12px 14px;margin-bottom:9px}
+.day-row.today{border-color:var(--accent)}
+.day-row.future{opacity:.55}
+.day-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.day-name{font-weight:600}
+.day-date{font-size:12.5px;color:var(--muted);margin-left:6px;font-weight:400}
+.day-badge{font-family:'Space Mono',monospace;font-size:15px;font-weight:700}
+.day-badge.positive{color:var(--green)}
+.day-badge.negative{color:var(--red)}
+.day-badge.neutral{color:var(--muted)}
+.day-inputs{display:flex;align-items:flex-end;gap:7px;flex-wrap:wrap;margin-top:10px}
+.grp{display:flex;flex-direction:column;gap:3px}
+.grp label{font-size:10.5px;color:var(--muted)}
+.grp input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
+  padding:8px 9px;font-family:'Space Mono',monospace;font-size:15px;min-width:92px}
+.sep{color:var(--muted);padding-bottom:9px}
+.day-foot{font-size:12.5px;color:var(--muted);margin-top:9px}
+
+.champ{margin-bottom:14px}
+.champ label{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+.champ input[type=text],.champ input[type=number],.champ select{
+  width:100%;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;padding:11px 12px;font-size:16px}
+.champ .aide{font-size:12.5px;color:var(--muted);margin-top:5px}
+.carte{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:12px}
+.jours{display:flex;gap:6px;flex-wrap:wrap}
+.jours button{background:var(--surface2);border:1px solid var(--border);border-radius:9px;
+  padding:9px 0;flex:1;min-width:44px;font-size:14px;font-weight:600;color:var(--muted)}
+.jours button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#06263a}
+.repart{display:grid;gap:8px;margin-top:10px}
+.repart .l{display:flex;align-items:center;gap:10px}
+.repart .l span{width:34px;font-size:13.5px;color:var(--muted)}
+.repart .l input{flex:1;background:var(--surface2);border:1px solid var(--border);
+  border-radius:9px;padding:9px 10px;font-family:'Space Mono',monospace;font-size:15px}
+.somme{font-size:13px;margin-top:9px;color:var(--muted)}
+.somme.ko{color:var(--amber)}
+.somme.ok{color:var(--green)}
+
+.btn{background:var(--accent);color:#06263a;border:0;border-radius:10px;padding:13px;
+  font-weight:600;font-size:15.5px;width:100%}
+.btn.creux{background:transparent;color:var(--text);border:1px solid var(--border)}
+.btn.rouge{background:transparent;color:var(--red);border:1px solid var(--red)}
+.btn:disabled{opacity:.4}
+.actions{display:grid;gap:9px;margin-top:14px}
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+
+nav.onglets{position:fixed;left:0;right:0;bottom:0;display:flex;background:rgba(15,23,42,.95);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border-top:1px solid var(--border);padding-bottom:env(safe-area-inset-bottom);z-index:40}
+nav.onglets button{flex:1;background:none;border:0;padding:10px 4px 12px;color:var(--muted);
+  font-size:11.5px;display:grid;gap:3px;justify-items:center}
+nav.onglets button .ic{font-size:19px;line-height:1}
+nav.onglets button[aria-current="page"]{color:var(--accent)}
+
+.voile{position:fixed;inset:0;background:rgba(2,6,23,.6);z-index:50;display:none}
+.voile.on{display:block}
+.feuille{position:fixed;left:0;right:0;bottom:0;z-index:60;background:var(--bg);
+  border-top:1px solid var(--border);border-radius:16px 16px 0 0;max-height:92vh;overflow:auto;
+  padding:8px 18px calc(22px + env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .22s ease}
+.feuille.on{transform:translateY(0)}
+@media (prefers-reduced-motion:reduce){.feuille{transition:none}}
+.poignee{width:36px;height:4px;background:var(--border);border-radius:2px;margin:8px auto 14px}
+.feuille h2{font-size:18px;margin:0 0 14px;color:var(--text)}
+.feuille ol{padding-left:20px;margin:0 0 6px}
+.feuille li{font-size:15px;margin-bottom:9px}
+
+.guide h3{font-size:15px;margin:20px 0 6px}
+.guide p{font-size:14.5px;color:#cbd5e1;margin:0 0 9px}
+.guide em{font-style:normal;font-weight:600;color:var(--text)}
+
+.vide{background:var(--surface);border:1px dashed var(--border);border-radius:var(--r);
+  padding:22px 16px;text-align:center;color:var(--muted);font-size:14px}
+.vide strong{display:block;color:var(--text);margin-bottom:4px}
+
+.msg{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom));transform:translateX(-50%);
+  background:var(--surface2);border:1px solid var(--border);color:var(--text);
+  padding:10px 16px;border-radius:20px;font-size:14px;z-index:70;opacity:0;
+  pointer-events:none;transition:opacity .2s;max-width:88vw;text-align:center}
+.msg.on{opacity:1}
+input[type="time"]::-webkit-calendar-picker-indicator{filter:invert(1) opacity(.4)}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="app-title">Jornada</div>
+  <div class="app-sub" id="sousTitre">—</div>
+</header>
+
+<main>
+  <!-- ══════════ SEMAINE ══════════ -->
+  <section id="vueSemaine">
+    <div class="week-nav">
+      <button class="nav-btn" id="prevWeek" aria-label="Semaine précédente">←</button>
+      <span class="week-label" id="weekLabel">Semaine du …</span>
+      <button class="nav-btn" id="nextWeek" aria-label="Semaine suivante">→</button>
+    </div>
+    <div class="zone" style="padding-top:8px">
+      <div id="bandeauRegime"></div>
+      <div class="summary">
+        <div class="item"><div class="val mono" id="sPreste">0:00</div><div class="lbl">Prestées</div></div>
+        <div class="item"><div class="val mono" id="sReste">0:00</div><div class="lbl">Reste à prester</div></div>
+        <div class="item"><div class="val mono" id="sEcart">+0:00</div><div class="lbl">Écart</div></div>
+      </div>
+      <div class="ligne-info"><span>Volume de la semaine</span><b id="sVolume">0:00</b></div>
+      <div id="ligneReport"></div>
+      <div id="daysGrid"></div>
+    </div>
+  </section>
+
+  <!-- ══════════ RÉGLAGES ══════════ -->
+  <section class="zone" id="vueReglages" hidden>
+    <h2>Régime ordinaire</h2>
+    <div class="carte">
+      <div class="champ">
+        <label for="oVolume">Volume hebdomadaire</label>
+        <input type="text" id="oVolume" inputmode="text" placeholder="37:30">
+        <div class="aide">Format h:mm, par exemple 37:30 ou 30:00.</div>
+      </div>
+      <div class="champ">
+        <label>Jours prestés</label>
+        <div class="jours" id="oJours"></div>
+      </div>
+      <div class="champ">
+        <label>Répartition sur les jours</label>
+        <div class="repart" id="oRepart"></div>
+        <div class="somme" id="oSomme"></div>
+      </div>
+      <button class="btn creux" id="oRepartir">Répartir également</button>
+    </div>
+
+    <h2 class="suite">Saisie de la journée</h2>
+    <div class="carte">
+      <div class="champ">
+        <label for="modeSaisie">Comment tu encodes une journée</label>
+        <select id="modeSaisie">
+          <option value="4champs">Début, pause, reprise, fin — la pause se déduit d'elle-même</option>
+          <option value="2champs-pause">Arrivée et départ, avec une pause déduite</option>
+          <option value="2champs-sans">Arrivée et départ, sans déduction</option>
+        </select>
+      </div>
+      <div class="champ" id="champPause" hidden>
+        <label for="pauseMin">Pause déduite par défaut</label>
+        <input type="text" id="pauseMin" placeholder="0:30">
+        <div class="aide">Valeur appliquée automatiquement, que tu peux remplacer jour par jour quand la pause déborde.</div>
+      </div>
+    </div>
+
+    <h2 class="suite">Horaire d'été</h2>
+    <div class="carte">
+      <div class="champ">
+        <label for="eteActif">Deuxième régime sur une période de l'année</label>
+        <select id="eteActif">
+          <option value="non">Pas d'horaire d'été</option>
+          <option value="oui">Horaire d'été actif</option>
+        </select>
+      </div>
+      <div id="blocEte" hidden>
+        <div class="duo" style="margin-top:0">
+          <div class="champ"><label for="eteDebut">Du</label><input type="text" id="eteDebut" placeholder="01/07"></div>
+          <div class="champ"><label for="eteFin">Au</label><input type="text" id="eteFin" placeholder="31/08"></div>
+        </div>
+        <div class="champ">
+          <label for="eVolume">Volume hebdomadaire en été</label>
+          <input type="text" id="eVolume" placeholder="30:00">
+        </div>
+        <div class="champ">
+          <label>Jours prestés en été</label>
+          <div class="jours" id="eJours"></div>
+        </div>
+        <div class="champ">
+          <label>Répartition</label>
+          <div class="repart" id="eRepart"></div>
+          <div class="somme" id="eSomme"></div>
+        </div>
+        <button class="btn creux" id="eRepartir">Répartir également</button>
+        <div class="champ" style="margin-top:14px">
+          <label for="etePause">Pause en été</label>
+          <select id="etePause">
+            <option value="meme">Comme le reste de l'année</option>
+            <option value="sans">Sans pause déduite</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="suite">Périodes exceptionnelles</h2>
+    <div id="listeExceptions"></div>
+    <div class="actions">
+      <button class="btn creux" id="nouvelleException">Ajouter une période</button>
+    </div>
+
+    <h2 class="suite">Solde</h2>
+    <div class="carte">
+      <div class="champ">
+        <label for="report">Report d'une semaine à l'autre</label>
+        <select id="report">
+          <option value="semaine">Le solde repart de zéro chaque semaine</option>
+          <option value="mois">Le solde repart de zéro chaque mois</option>
+          <option value="continu">Le solde se cumule sans remise à zéro</option>
+        </select>
+      </div>
+      <div class="champ">
+        <label for="seuil">Alerte quand le solde descend sous</label>
+        <input type="text" id="seuil" placeholder="1:00">
+        <div class="aide">Laisse vide pour ne pas être alertée.</div>
+      </div>
+    </div>
+
+    <h2 class="suite">Sauvegarde</h2>
+    <div class="actions">
+      <button class="btn creux" id="exporter">Exporter mes données</button>
+      <button class="btn creux" id="importer">Importer une sauvegarde</button>
+      <input type="file" id="fichierImport" accept=".json,application/json" style="display:none">
+      <button class="btn creux" id="revoirGuide">Revoir le guide de départ</button>
+    </div>
+  </section>
+
+  <!-- ══════════ AIDE ══════════ -->
+  <section class="zone" id="vueAide" hidden>
+    <h2>Comment ça marche</h2>
+    <div class="carte guide">
+      <h3>1. Ton régime, une fois pour toutes</h3>
+      <p>Dans Réglages, indique ton volume hebdomadaire, les jours que tu prestes et la façon dont ce volume se répartit. La répartition ne sert qu'à donner une référence à chaque journée — c'est le volume de la semaine qui fait foi.</p>
+
+      <h3>2. La pause</h3>
+      <p>Trois façons de faire, au choix. Si tu encodes début, pause, reprise et fin, la pause se déduit d'elle-même et une pause allongée est prise en compte sans rien régler. Si tu n'encodes qu'une arrivée et un départ, tu peux faire déduire une durée fixe — remplaçable jour par jour quand la pause déborde. La déduction est toujours affichée sous la journée.</p>
+
+      <h3>3. L'été et les périodes particulières</h3>
+      <p>L'horaire d'été est un second régime, avec ses propres volume, jours et pause, actif entre deux dates. Les périodes exceptionnelles servent aux remplacements : une plage de dates avec son volume et ses jours, qui ne dérange rien en dehors d'elle.</p>
+      <p>Chaque journée encodée retient le régime qui s'appliquait ce jour-là. Changer un réglage aujourd'hui ne fausse pas tes semaines passées.</p>
+
+      <h3>4. Savoir où tu en es</h3>
+      <p><em>Reste à prester</em> te dit ce qu'il te manque pour boucler la semaine. <em>Écart</em> compare ce que tu as presté à ce qui était attendu sur les jours déjà écoulés. Les deux se recalculent à chaque saisie, dès le lundi.</p>
+
+      <h3>Bon à savoir</h3>
+      <p>Tes données restent sur cet appareil et ne partent nulle part. Elles ne se synchronisent pas entre téléphone et ordinateur : pour changer d'appareil, exporte d'un côté et importe de l'autre.</p>
+    </div>
+  </section>
+</main>
+
+<nav class="onglets">
+  <button data-vue="Semaine" aria-current="page"><span class="ic">📅</span>Semaine</button>
+  <button data-vue="Reglages"><span class="ic">⚙️</span>Réglages</button>
+  <button data-vue="Aide"><span class="ic">❔</span>Aide</button>
+</nav>
+
+<div class="voile" id="voile"></div>
+
+<!-- feuille période exceptionnelle -->
+<div class="feuille" id="feuilleException" role="dialog" aria-modal="true" aria-labelledby="titreException">
+  <div class="poignee"></div>
+  <h2 id="titreException">Période exceptionnelle</h2>
+  <div class="champ"><label for="xNom">Intitulé</label>
+    <input type="text" id="xNom" placeholder="Remplacement congés"></div>
+  <div class="duo" style="margin-top:0">
+    <div class="champ"><label for="xDebut">Du</label><input type="text" id="xDebut" placeholder="06/07/2026"></div>
+    <div class="champ"><label for="xFin">Au</label><input type="text" id="xFin" placeholder="17/07/2026"></div>
+  </div>
+  <div class="champ"><label for="xVolume">Volume hebdomadaire</label>
+    <input type="text" id="xVolume" placeholder="37:30"></div>
+  <div class="champ"><label>Jours prestés</label><div class="jours" id="xJours"></div></div>
+  <div class="champ"><label>Répartition</label><div class="repart" id="xRepart"></div>
+    <div class="somme" id="xSomme"></div></div>
+  <button class="btn creux" id="xRepartir">Répartir également</button>
+  <div class="duo">
+    <button class="btn creux" id="xAnnuler">Annuler</button>
+    <button class="btn" id="xEnregistrer">Enregistrer</button>
+  </div>
+  <div class="actions" id="xZoneSuppr" hidden>
+    <button class="btn rouge" id="xSupprimer">Supprimer cette période</button>
+  </div>
+</div>
+
+<!-- feuille bienvenue -->
+<div class="feuille" id="feuilleBienvenue" role="dialog" aria-modal="true" aria-labelledby="titreBienvenue">
+  <div class="poignee"></div>
+  <h2 id="titreBienvenue">Bienvenue</h2>
+  <p style="font-size:15px;margin:0 0 12px">Cette appli suit ton temps de travail semaine par semaine. En trois temps :</p>
+  <ol>
+    <li>Tu règles ton régime : volume hebdomadaire, jours prestés, répartition, pause.</li>
+    <li>Tu encodes tes heures au fil de la semaine.</li>
+    <li>L'appli te dit à tout moment ce qu'il te reste à prester et où en est ton solde.</li>
+  </ol>
+  <p style="font-size:13.5px;color:var(--muted)">Tes données restent sur cet appareil.</p>
+  <div class="duo">
+    <button class="btn creux" id="bPlusTard">Plus tard</button>
+    <button class="btn" id="bConfigurer">Régler mon horaire</button>
+  </div>
+</div>
+
+<div class="msg" id="msg" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ═══════════════════════════════════════════
+   DONNÉES
+   ═══════════════════════════════════════════ */
+const CLE = "mesheures_v2";
+const JOURS_COURTS = ["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
+const JOURS_LONGS  = ["Dimanche","Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+const OUVRES = [1,2,3,4,5];
+
+function configVierge(){
+  return {
+    volume: 2250,                         // 37h30
+    jours: [1,2,3,4,5],
+    repartition: {1:450,2:450,3:450,4:450,5:450},
+    saisie: "4champs",
+    pauseMin: 30,
+    ete: {actif:false, debut:"07-01", fin:"08-31", volume:1800,
+          jours:[1,2,3,4,5], repartition:{1:360,2:360,3:360,4:360,5:360}, pause:"meme"},
+    report: "semaine",
+    seuil: 60
+  };
+}
+
+let etat = {config: configVierge(), exceptions: [], jours: {}, guideVu:false};
+
+/* Reprise de l'ancienne version, si elle existe */
+function migrer(){
+  const v2 = localStorage.getItem(CLE);
+  if(v2){ etat = JSON.parse(v2); return; }
+  const v1 = localStorage.getItem("mesheures_v1");
+  if(v1){
+    const anciens = JSON.parse(v1);
+    etat.jours = {};
+    for(const k in anciens){ etat.jours[k] = {...anciens[k]}; }
+    etat.config.volume = 1800;                       // 4 × 7h30
+    etat.config.jours = [1,2,4,5];
+    etat.config.repartition = {1:450,2:450,4:450,5:450};
+    etat.config.ete = {actif:true, debut:"07-01", fin:"08-31", volume:1440,
+                       jours:[1,2,4,5], repartition:{1:360,2:360,4:360,5:360}, pause:"meme"};
+    etat.config.saisie = "4champs";
+    etat.config.seuil = 60;
+    etat.guideVu = true;
+    sauver();
+  }
+}
+function sauver(){ localStorage.setItem(CLE, JSON.stringify(etat)); }
+
+/* ═══════════════════════════════════════════
+   OUTILS
+   ═══════════════════════════════════════════ */
+const pad = n => String(n).padStart(2,"0");
+
+function minsVersTexte(m, signe){
+  const s = m < 0 ? "-" : "+";
+  const a = Math.abs(Math.round(m));
+  const t = Math.floor(a/60) + ":" + pad(a%60);
+  return signe ? s + t : t;
+}
+function texteVersMins(t){
+  if(!t) return null;
+  const s = String(t).trim().replace(",",".").replace("h",":");
+  let m = s.match(/^(\d+):(\d{1,2})$/);
+  if(m) return parseInt(m[1],10)*60 + parseInt(m[2],10);
+  m = s.match(/^(\d+):?$/);
+  if(m) return parseInt(m[1],10)*60;
+  m = s.match(/^(\d+(?:\.\d+)?)$/);
+  if(m) return Math.round(parseFloat(m[1])*60);
+  return null;
+}
+function heureVersMins(h){
+  if(!h) return null;
+  const m = String(h).match(/^(\d{1,2}):(\d{2})$/);
+  return m ? parseInt(m[1],10)*60 + parseInt(m[2],10) : null;
+}
+function lundiDe(date){
+  const d = new Date(date); d.setHours(0,0,0,0);
+  const j = d.getDay();
+  d.setDate(d.getDate() + (j === 0 ? -6 : 1 - j));
+  return d;
+}
+const plusJours = (d,n)=>{ const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const cle = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const jjmm = d => pad(d.getDate())+"/"+pad(d.getMonth()+1);
+function texteVersDate(t){
+  const m = String(t||"").match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(!m) return null;
+  return m[3]+"-"+pad(+m[2])+"-"+pad(+m[1]);
+}
+function dateVersTexte(iso){
+  const m = String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? m[3]+"/"+m[2]+"/"+m[1] : "";
+}
+function texteVersJourMois(t){
+  const m = String(t||"").match(/^(\d{1,2})\/(\d{1,2})$/);
+  return m ? pad(+m[2])+"-"+pad(+m[1]) : null;
+}
+function jourMoisVersTexte(jm){
+  const m = String(jm||"").match(/^(\d{2})-(\d{2})$/);
+  return m ? m[2]+"/"+m[1] : "";
+}
+
+let minuteur;
+function dire(texte){
+  const el = document.getElementById("msg");
+  el.textContent = texte; el.classList.add("on");
+  clearTimeout(minuteur); minuteur = setTimeout(()=>el.classList.remove("on"), 2800);
+}
+
+/* ═══════════════════════════════════════════
+   RÉGIME APPLICABLE À UNE DATE
+   ═══════════════════════════════════════════ */
+function regimeDe(date){
+  const k = cle(date);
+  const c = etat.config;
+
+  const x = etat.exceptions.find(e => k >= e.debut && k <= e.fin);
+  if(x) return {jours:x.jours, repartition:x.repartition, pause:"meme", nom:x.nom};
+
+  if(c.ete && c.ete.actif){
+    const jm = pad(date.getMonth()+1)+"-"+pad(date.getDate());
+    const d = c.ete.debut, f = c.ete.fin;
+    const dedans = (d <= f) ? (jm >= d && jm <= f) : (jm >= d || jm <= f);
+    if(dedans) return {jours:c.ete.jours, repartition:c.ete.repartition,
+                       pause:c.ete.pause, nom:"Horaire d'été"};
+  }
+  return {jours:c.jours, repartition:c.repartition, pause:"meme", nom:null};
+}
+
+/* Référence d'une journée : figée si la journée a déjà été encodée */
+function referenceDe(date){
+  const j = etat.jours[cle(date)];
+  if(j && typeof j.ref === "number") return j.ref;
+  const r = regimeDe(date);
+  return r.jours.includes(date.getDay()) ? (r.repartition[date.getDay()] || 0) : 0;
+}
+
+function pauseAppliquee(date){
+  const c = etat.config;
+  if(c.saisie !== "2champs-pause") return 0;
+  const r = regimeDe(date);
+  if(r.pause === "sans") return 0;
+  return c.pauseMin || 0;
+}
+
+/* Minutes prestées et pause déduite pour une journée */
+function calcJour(date){
+  const j = etat.jours[cle(date)];
+  if(!j) return {total:0, pause:0, saisi:false};
+  const mode = j.mode || etat.config.saisie;
+
+  if(mode === "4champs"){
+    const a = heureVersMins(j.am_start), b = heureVersMins(j.am_end);
+    const c2 = heureVersMins(j.pm_start), d = heureVersMins(j.pm_end);
+    let total = 0, pause = 0;
+    if(a !== null && b !== null && b > a) total += b - a;
+    if(c2 !== null && d !== null && d > c2) total += d - c2;
+    if(b !== null && c2 !== null && c2 > b) pause = c2 - b;
+    return {total, pause, saisi: total > 0};
+  }
+  const a = heureVersMins(j.debut), b = heureVersMins(j.fin);
+  if(a === null || b === null || b <= a) return {total:0, pause:0, saisi:false};
+  const pause = (typeof j.pause === "number") ? j.pause : pauseAppliquee(date);
+  return {total: Math.max(0, b - a - pause), pause, saisi:true};
+}
+
+/* ═══════════════════════════════════════════
+   AFFICHAGE — SEMAINE
+   ═══════════════════════════════════════════ */
+let decalage = 0;
+
+function lundiAffiche(){ return plusJours(lundiDe(new Date()), decalage*7); }
+
+function rendreSemaine(){
+  const lundi = lundiAffiche();
+  const vendredi = plusJours(lundi, 4);
+  const today = new Date(); today.setHours(0,0,0,0);
+
+  document.getElementById("weekLabel").textContent =
+    "Sem. du " + jjmm(lundi) + " au " + jjmm(vendredi);
+  const suiv = document.getElementById("nextWeek");
+  suiv.disabled = decalage >= 0;
+
+  // bandeau régime particulier
+  const r = regimeDe(lundi);
+  document.getElementById("bandeauRegime").innerHTML =
+    r.nom ? `<div class="bandeau">${r.nom}</div>` : "";
+
+  const grille = document.getElementById("daysGrid");
+  grille.innerHTML = "";
+
+  let preste = 0, attendu = 0, attenduEcoule = 0, presteEcoule = 0;
+
+  OUVRES.forEach((dow, i)=>{
+    const d = plusJours(lundi, i);
+    const ref = referenceDe(d);
+    const journee = etat.jours[cle(d)];
+    if(ref === 0 && !journee) return;          // jour non presté et rien d'encodé
+
+    const k = cle(d);
+    const futur = d > today;
+    const aujourdhui = d.getTime() === today.getTime();
+    const {total, pause, saisi} = calcJour(d);
+
+    attendu += ref;
+    preste += total;
+    if(!futur){ attenduEcoule += ref; presteEcoule += total; }
+
+    const ligne = document.createElement("div");
+    ligne.className = "day-row" + (aujourdhui ? " today" : "") + (futur ? " future" : "");
+
+    const ecart = total - ref;
+    const badge = saisi ? `<span class="day-badge ${ecart>=0?"positive":"negative"}">${minsVersTexte(ecart,true)}</span>`
+                        : `<span class="day-badge neutral">—:—</span>`;
+
+    ligne.innerHTML = `<div class="day-head">
+        <div><span class="day-name">${JOURS_COURTS[d.getDay()]}</span>
+        <span class="day-date">${jjmm(d)}</span></div>${badge}</div>
+      <div class="day-inputs" data-cle="${k}"></div>
+      <div class="day-foot">${
+        saisi ? "Presté " + minsVersTexte(total,false)
+                + (pause ? " · pause déduite " + minsVersTexte(pause,false) : "")
+                + " · référence " + minsVersTexte(ref,false)
+              : "Référence " + minsVersTexte(ref,false)
+      }</div>`;
+
+    remplirChamps(ligne.querySelector(".day-inputs"), d);
+    grille.appendChild(ligne);
+  });
+
+  if(!grille.children.length){
+    grille.innerHTML = `<div class="vide"><strong>Aucun jour presté cette semaine</strong>
+      Vérifie tes jours prestés dans Réglages.</div>`;
+  }
+
+  const reste = Math.max(0, attendu - preste);
+  const ecart = presteEcoule - attenduEcoule;
+
+  document.getElementById("sPreste").textContent = minsVersTexte(preste, false);
+  document.getElementById("sReste").textContent  = minsVersTexte(reste, false);
+  const el = document.getElementById("sEcart");
+  el.textContent = minsVersTexte(ecart, true);
+  el.style.color = ecart >= 0 ? "var(--green)" : "var(--red)";
+  document.getElementById("sVolume").textContent = minsVersTexte(attendu, false);
+
+  rendreReport(lundi, ecart);
+  majSousTitre();
+}
+
+function remplirChamps(conteneur, date){
+  const k = cle(date);
+  const j = etat.jours[k] || {};
+  const mode = j.mode || etat.config.saisie;
+
+  const champ = (label, nom, type)=>{
+    const g = document.createElement("div");
+    g.className = "grp";
+    const l = document.createElement("label"); l.textContent = label;
+    const i = document.createElement("input");
+    i.type = type || "time";
+    i.value = j[nom] || "";
+    if(type === "text"){ i.placeholder = "0:30"; i.style.minWidth = "78px"; }
+    i.addEventListener("change", ()=>{
+      const rec = etat.jours[k] || (etat.jours[k] = {mode, ref: referenceDe(date)});
+      if(typeof rec.ref !== "number") rec.ref = referenceDe(date);
+      rec.mode = mode;
+      if(type === "text"){
+        const v = texteVersMins(i.value);
+        if(i.value.trim() === "") delete rec.pause; else rec.pause = v || 0;
+      }else{
+        rec[nom] = i.value;
+      }
+      sauver(); rendreSemaine();
+    });
+    g.appendChild(l); g.appendChild(i);
+    return g;
+  };
+  const sep = t =>{ const s = document.createElement("span"); s.className="sep"; s.textContent=t; return s; };
+
+  if(mode === "4champs"){
+    conteneur.appendChild(champ("Début","am_start"));
+    conteneur.appendChild(sep("↔"));
+    conteneur.appendChild(champ("Pause","am_end"));
+    conteneur.appendChild(sep("·"));
+    conteneur.appendChild(champ("Reprise","pm_start"));
+    conteneur.appendChild(sep("↔"));
+    conteneur.appendChild(champ("Fin","pm_end"));
+  }else{
+    conteneur.appendChild(champ("Arrivée","debut"));
+    conteneur.appendChild(sep("↔"));
+    conteneur.appendChild(champ("Départ","fin"));
+    if(mode === "2champs-pause"){
+      conteneur.appendChild(sep("−"));
+      conteneur.appendChild(champ("Pause","pause","text"));
+    }
+  }
+}
+
+/* Cumul des semaines antérieures, selon le réglage de report */
+function rendreReport(lundi, ecartSemaine){
+  const zone = document.getElementById("ligneReport");
+  const mode = etat.config.report;
+  if(mode === "semaine"){ zone.innerHTML = ""; return; }
+
+  const debutPeriode = (mode === "mois")
+    ? new Date(lundi.getFullYear(), lundi.getMonth(), 1)
+    : new Date(2000,0,1);
+
+  let cumul = 0;
+  for(const k in etat.jours){
+    const d = new Date(k + "T12:00:00");
+    if(d >= debutPeriode && d < lundi){
+      cumul += calcJour(d).total - referenceDe(d);
+    }
+  }
+  const total = cumul + ecartSemaine;
+  const seuil = etat.config.seuil;
+  const alerte = (typeof seuil === "number" && seuil > 0 && total < -seuil);
+
+  zone.innerHTML = `<div class="ligne-info ${alerte?"alerte":""}">
+    <span>Solde cumulé ${mode === "mois" ? "du mois" : "total"}</span>
+    <b>${minsVersTexte(total, true)}</b></div>`;
+}
+
+function majSousTitre(){
+  const c = etat.config;
+  const noms = c.jours.slice().sort().map(j=>JOURS_COURTS[j]).join(", ");
+  let t = minsVersTexte(c.volume,false) + "/semaine · " + (noms || "aucun jour");
+  if(c.ete && c.ete.actif){
+    t += " · " + minsVersTexte(c.ete.volume,false) + " du "
+       + jourMoisVersTexte(c.ete.debut) + " au " + jourMoisVersTexte(c.ete.fin);
+  }
+  document.getElementById("sousTitre").textContent = t;
+}
+
+/* ═══════════════════════════════════════════
+   RÉGLAGES
+   ═══════════════════════════════════════════ */
+function boutonsJours(conteneur, choisis, quand){
+  conteneur.innerHTML = "";
+  OUVRES.forEach(j=>{
+    const b = document.createElement("button");
+    b.textContent = JOURS_COURTS[j];
+    b.setAttribute("aria-pressed", String(choisis.includes(j)));
+    b.onclick = ()=>{
+      const actif = b.getAttribute("aria-pressed") === "true";
+      b.setAttribute("aria-pressed", String(!actif));
+      quand(OUVRES.filter(x=>
+        conteneur.children[OUVRES.indexOf(x)].getAttribute("aria-pressed") === "true"));
+    };
+    conteneur.appendChild(b);
+  });
+}
+
+function champsRepartition(conteneur, jours, repartition, volume, zoneSomme, quand){
+  conteneur.innerHTML = "";
+  jours.forEach(j=>{
+    const l = document.createElement("div"); l.className = "l";
+    const s = document.createElement("span"); s.textContent = JOURS_COURTS[j];
+    const i = document.createElement("input");
+    i.type = "text"; i.value = minsVersTexte(repartition[j] || 0, false);
+    i.addEventListener("change", ()=>{
+      const v = texteVersMins(i.value);
+      repartition[j] = (v === null ? 0 : v);
+      i.value = minsVersTexte(repartition[j], false);
+      quand();
+    });
+    l.appendChild(s); l.appendChild(i);
+    conteneur.appendChild(l);
+  });
+  majSomme(jours, repartition, volume, zoneSomme);
+}
+
+function majSomme(jours, repartition, volume, zone){
+  const somme = jours.reduce((t,j)=>t + (repartition[j]||0), 0);
+  const ok = somme === volume;
+  zone.className = "somme " + (ok ? "ok" : "ko");
+  zone.textContent = ok
+    ? "La répartition correspond au volume."
+    : "Total réparti " + minsVersTexte(somme,false) + " pour un volume de "
+      + minsVersTexte(volume,false) + " — écart de " + minsVersTexte(somme-volume,true) + ".";
+}
+
+function repartirEgalement(jours, repartition, volume){
+  jours.forEach(j=> delete repartition[j]);
+  if(!jours.length) return;
+  const base = Math.floor(volume / jours.length);
+  let reste = volume - base * jours.length;
+  jours.forEach(j=>{ repartition[j] = base + (reste-- > 0 ? 1 : 0); });
+}
+
+function rendreReglages(){
+  const c = etat.config;
+
+  document.getElementById("oVolume").value = minsVersTexte(c.volume,false);
+  boutonsJours(document.getElementById("oJours"), c.jours, js=>{
+    c.jours = js;
+    repartirEgalement(c.jours, c.repartition, c.volume);
+    sauver(); rendreReglages(); rendreSemaine();
+  });
+  champsRepartition(document.getElementById("oRepart"), c.jours, c.repartition, c.volume,
+    document.getElementById("oSomme"), ()=>{
+      sauver();
+      majSomme(c.jours, c.repartition, c.volume, document.getElementById("oSomme"));
+      rendreSemaine();
+    });
+
+  document.getElementById("modeSaisie").value = c.saisie;
+  document.getElementById("champPause").hidden = (c.saisie !== "2champs-pause");
+  document.getElementById("pauseMin").value = minsVersTexte(c.pauseMin || 0, false);
+
+  document.getElementById("eteActif").value = c.ete.actif ? "oui" : "non";
+  document.getElementById("blocEte").hidden = !c.ete.actif;
+  document.getElementById("eteDebut").value = jourMoisVersTexte(c.ete.debut);
+  document.getElementById("eteFin").value   = jourMoisVersTexte(c.ete.fin);
+  document.getElementById("eVolume").value  = minsVersTexte(c.ete.volume,false);
+  document.getElementById("etePause").value = c.ete.pause;
+  boutonsJours(document.getElementById("eJours"), c.ete.jours, js=>{
+    c.ete.jours = js;
+    repartirEgalement(c.ete.jours, c.ete.repartition, c.ete.volume);
+    sauver(); rendreReglages(); rendreSemaine();
+  });
+  champsRepartition(document.getElementById("eRepart"), c.ete.jours, c.ete.repartition, c.ete.volume,
+    document.getElementById("eSomme"), ()=>{
+      sauver();
+      majSomme(c.ete.jours, c.ete.repartition, c.ete.volume, document.getElementById("eSomme"));
+      rendreSemaine();
+    });
+
+  document.getElementById("report").value = c.report;
+  document.getElementById("seuil").value = c.seuil ? minsVersTexte(c.seuil,false) : "";
+
+  rendreExceptions();
+  majSousTitre();
+}
+
+document.getElementById("oVolume").addEventListener("change", e=>{
+  const v = texteVersMins(e.target.value);
+  if(v === null || v <= 0){ dire("Format attendu : 37:30"); e.target.value = minsVersTexte(etat.config.volume,false); return; }
+  etat.config.volume = v;
+  repartirEgalement(etat.config.jours, etat.config.repartition, v);
+  sauver(); rendreReglages(); rendreSemaine();
+});
+document.getElementById("oRepartir").onclick = ()=>{
+  repartirEgalement(etat.config.jours, etat.config.repartition, etat.config.volume);
+  sauver(); rendreReglages(); rendreSemaine(); dire("Répartition égalisée.");
+};
+document.getElementById("modeSaisie").addEventListener("change", e=>{
+  etat.config.saisie = e.target.value;
+  sauver(); rendreReglages(); rendreSemaine();
+});
+document.getElementById("pauseMin").addEventListener("change", e=>{
+  const v = texteVersMins(e.target.value);
+  etat.config.pauseMin = (v === null ? 0 : v);
+  e.target.value = minsVersTexte(etat.config.pauseMin,false);
+  sauver(); rendreSemaine();
+});
+document.getElementById("eteActif").addEventListener("change", e=>{
+  etat.config.ete.actif = (e.target.value === "oui");
+  sauver(); rendreReglages(); rendreSemaine();
+});
+["eteDebut","eteFin"].forEach(id=>{
+  document.getElementById(id).addEventListener("change", e=>{
+    const jm = texteVersJourMois(e.target.value);
+    if(!jm){ dire("Format attendu : 01/07"); rendreReglages(); return; }
+    etat.config.ete[id === "eteDebut" ? "debut" : "fin"] = jm;
+    sauver(); rendreReglages(); rendreSemaine();
+  });
+});
+document.getElementById("eVolume").addEventListener("change", e=>{
+  const v = texteVersMins(e.target.value);
+  if(v === null || v <= 0){ dire("Format attendu : 30:00"); rendreReglages(); return; }
+  etat.config.ete.volume = v;
+  repartirEgalement(etat.config.ete.jours, etat.config.ete.repartition, v);
+  sauver(); rendreReglages(); rendreSemaine();
+});
+document.getElementById("eRepartir").onclick = ()=>{
+  repartirEgalement(etat.config.ete.jours, etat.config.ete.repartition, etat.config.ete.volume);
+  sauver(); rendreReglages(); rendreSemaine(); dire("Répartition égalisée.");
+};
+document.getElementById("etePause").addEventListener("change", e=>{
+  etat.config.ete.pause = e.target.value; sauver(); rendreSemaine();
+});
+document.getElementById("report").addEventListener("change", e=>{
+  etat.config.report = e.target.value; sauver(); rendreSemaine();
+});
+document.getElementById("seuil").addEventListener("change", e=>{
+  const v = texteVersMins(e.target.value);
+  etat.config.seuil = (e.target.value.trim() === "" || v === null) ? 0 : v;
+  e.target.value = etat.config.seuil ? minsVersTexte(etat.config.seuil,false) : "";
+  sauver(); rendreSemaine();
+});
+
+/* ═══════════════════════════════════════════
+   PÉRIODES EXCEPTIONNELLES
+   ═══════════════════════════════════════════ */
+const voile = document.getElementById("voile");
+const fException = document.getElementById("feuilleException");
+const fBienvenue = document.getElementById("feuilleBienvenue");
+let brouillon = null;
+
+function ouvrirFeuille(f){ voile.classList.add("on"); f.classList.add("on"); }
+function fermerFeuilles(){
+  voile.classList.remove("on");
+  fException.classList.remove("on");
+  fBienvenue.classList.remove("on");
+  brouillon = null;
+}
+voile.onclick = fermerFeuilles;
+
+function rendreExceptions(){
+  const z = document.getElementById("listeExceptions");
+  if(!etat.exceptions.length){
+    z.innerHTML = `<div class="vide"><strong>Aucune période</strong>
+      À créer quand ton horaire change temporairement, pour un remplacement par exemple.</div>`;
+    return;
+  }
+  z.innerHTML = etat.exceptions
+    .slice().sort((a,b)=>a.debut.localeCompare(b.debut))
+    .map(x=>`<button class="carte" style="width:100%;text-align:left" data-id="${x.id}">
+      <div style="font-weight:600">${x.nom}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:3px">
+        ${dateVersTexte(x.debut)} → ${dateVersTexte(x.fin)} ·
+        ${minsVersTexte(x.volume,false)} ·
+        ${x.jours.slice().sort().map(j=>JOURS_COURTS[j]).join(", ")}</div>
+    </button>`).join("");
+  z.querySelectorAll("[data-id]").forEach(b=>
+    b.onclick = ()=> ouvrirException(etat.exceptions.find(x=>x.id === b.dataset.id)));
+}
+
+function ouvrirException(x){
+  const c = etat.config;
+  brouillon = x ? JSON.parse(JSON.stringify(x)) : {
+    id: Date.now().toString(36),
+    nom: "", debut: "", fin: "",
+    volume: c.volume, jours: c.jours.slice(),
+    repartition: JSON.parse(JSON.stringify(c.repartition))
+  };
+  document.getElementById("titreException").textContent = x ? "Modifier la période" : "Nouvelle période";
+  document.getElementById("xNom").value = brouillon.nom;
+  document.getElementById("xDebut").value = dateVersTexte(brouillon.debut);
+  document.getElementById("xFin").value = dateVersTexte(brouillon.fin);
+  document.getElementById("xVolume").value = minsVersTexte(brouillon.volume,false);
+  rendreChampsException();
+  document.getElementById("xZoneSuppr").hidden = !x;
+  ouvrirFeuille(fException);
+}
+
+function rendreChampsException(){
+  boutonsJours(document.getElementById("xJours"), brouillon.jours, js=>{
+    brouillon.jours = js;
+    repartirEgalement(brouillon.jours, brouillon.repartition, brouillon.volume);
+    rendreChampsException();
+  });
+  champsRepartition(document.getElementById("xRepart"), brouillon.jours, brouillon.repartition,
+    brouillon.volume, document.getElementById("xSomme"), ()=>
+      majSomme(brouillon.jours, brouillon.repartition, brouillon.volume,
+               document.getElementById("xSomme")));
+}
+
+document.getElementById("xVolume").addEventListener("change", e=>{
+  const v = texteVersMins(e.target.value);
+  if(v === null || v <= 0){ dire("Format attendu : 37:30"); return; }
+  brouillon.volume = v;
+  repartirEgalement(brouillon.jours, brouillon.repartition, v);
+  e.target.value = minsVersTexte(v,false);
+  rendreChampsException();
+});
+document.getElementById("xRepartir").onclick = ()=>{
+  repartirEgalement(brouillon.jours, brouillon.repartition, brouillon.volume);
+  rendreChampsException(); dire("Répartition égalisée.");
+};
+document.getElementById("nouvelleException").onclick = ()=> ouvrirException(null);
+document.getElementById("xAnnuler").onclick = fermerFeuilles;
+
+document.getElementById("xEnregistrer").onclick = ()=>{
+  const nom = document.getElementById("xNom").value.trim();
+  const debut = texteVersDate(document.getElementById("xDebut").value);
+  const fin   = texteVersDate(document.getElementById("xFin").value);
+  if(!nom){ dire("Donne un intitulé à cette période."); return; }
+  if(!debut || !fin){ dire("Dates attendues au format 06/07/2026."); return; }
+  if(fin < debut){ dire("La date de fin précède la date de début."); return; }
+  brouillon.nom = nom; brouillon.debut = debut; brouillon.fin = fin;
+  const i = etat.exceptions.findIndex(x=>x.id === brouillon.id);
+  if(i >= 0) etat.exceptions[i] = brouillon; else etat.exceptions.push(brouillon);
+  sauver(); fermerFeuilles(); rendreExceptions(); rendreSemaine();
+  dire("Période enregistrée.");
+};
+
+document.getElementById("xSupprimer").onclick = ()=>{
+  etat.exceptions = etat.exceptions.filter(x=>x.id !== brouillon.id);
+  sauver(); fermerFeuilles(); rendreExceptions(); rendreSemaine();
+  dire("Période supprimée.");
+};
+
+/* ═══════════════════════════════════════════
+   SAUVEGARDE / RESTAURATION
+   ═══════════════════════════════════════════ */
+document.getElementById("exporter").onclick = ()=>{
+  const paquet = {version:2, cree:new Date().toISOString(), etat};
+  const b = new Blob([JSON.stringify(paquet, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(b);
+  a.download = "jornada-" + cle(new Date()) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  dire("Sauvegarde créée.");
+};
+
+document.getElementById("importer").onclick = ()=>document.getElementById("fichierImport").click();
+document.getElementById("fichierImport").onchange = async e=>{
+  const f = e.target.files[0]; e.target.value = ""; if(!f) return;
+  try{
+    const p = JSON.parse(await f.text());
+    if(p.etat && p.etat.config){
+      if(!confirm("Remplacer la configuration et les journées enregistrées par celles de la sauvegarde ?")) return;
+      etat = p.etat;
+    }else{
+      const anciens = p.data || p;
+      const cles = Object.keys(anciens);
+      if(!cles.length || !cles.every(k=>/^\d{4}-\d{2}-\d{2}$/.test(k))) throw new Error("format");
+      if(!confirm("Importer " + cles.length + " journée(s) ? La configuration actuelle est conservée.")) return;
+      cles.forEach(k=>{ etat.jours[k] = {...anciens[k], mode:"4champs"}; });
+    }
+    sauver(); rendreReglages(); rendreSemaine();
+    dire("Sauvegarde importée.");
+  }catch(err){
+    dire("Fichier illisible — choisis une sauvegarde créée par l'appli.");
+  }
+};
+
+/* ═══════════════════════════════════════════
+   BIENVENUE ET NAVIGATION
+   ═══════════════════════════════════════════ */
+function allerA(nom){
+  document.querySelectorAll("nav.onglets button").forEach(b=>{
+    const actif = b.dataset.vue === nom;
+    if(actif) b.setAttribute("aria-current","page"); else b.removeAttribute("aria-current");
+  });
+  ["Semaine","Reglages","Aide"].forEach(v=>{
+    document.getElementById("vue"+v).hidden = (v !== nom);
+  });
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav.onglets button").forEach(b=>
+  b.onclick = ()=> allerA(b.dataset.vue));
+
+document.getElementById("prevWeek").onclick = ()=>{ decalage--; rendreSemaine(); };
+document.getElementById("nextWeek").onclick = ()=>{ if(decalage < 0){ decalage++; rendreSemaine(); } };
+
+function vuGuide(){ etat.guideVu = true; sauver(); }
+document.getElementById("bPlusTard").onclick = ()=>{ vuGuide(); fermerFeuilles(); };
+document.getElementById("bConfigurer").onclick = ()=>{ vuGuide(); fermerFeuilles(); allerA("Reglages"); };
+document.getElementById("revoirGuide").onclick = ()=> ouvrirFeuille(fBienvenue);
+
+/* Hors ligne : uniquement en HTTPS (ou en local). */
+if("serviceWorker" in navigator &&
+   (location.protocol === "https:" || location.hostname === "localhost")){
+  window.addEventListener("load", ()=>{ navigator.serviceWorker.register("./sw.js").catch(()=>{}); });
+}
+
+/* ═══════════════════════════════════════════
+   DÉMARRAGE
+   ═══════════════════════════════════════════ */
+try{
+  migrer();
+  if(!etat.config) etat.config = configVierge();
+  if(!etat.exceptions) etat.exceptions = [];
+  if(!etat.jours) etat.jours = {};
+  rendreReglages();
+  rendreSemaine();
+  if(!etat.guideVu) ouvrirFeuille(fBienvenue);
+}catch(e){
+  document.getElementById("daysGrid").innerHTML =
+    `<div class="vide"><strong>Le stockage est indisponible</strong>
+     Ouvre l'appli depuis une adresse web ou depuis l'écran d'accueil pour que les données soient conservées.</div>`;
+}
+</script>
+</body>
+</html>
