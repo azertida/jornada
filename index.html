@@ -670,6 +670,13 @@ function rendreSemaine(){
 
   majResume();
   majSousTitre();
+
+  // Sur la semaine en cours, on amène la journée du jour sous les yeux.
+  // « nearest » ne bouge rien si elle est déjà visible.
+  if(decalage === 0){
+    const ligneJour = grille.querySelector(".day-row.today");
+    if(ligneJour) requestAnimationFrame(()=> ligneJour.scrollIntoView({block:"nearest"}));
+  }
 }
 
 function remplirChamps(conteneur, date, ref, ligne){
