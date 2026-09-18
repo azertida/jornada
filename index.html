@@ -74,9 +74,22 @@ main{display:block}
 .day-inputs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
 .grp{display:flex;flex-direction:column;gap:3px;min-width:0}
 .grp label{font-size:10.5px;color:var(--muted)}
-.grp input[type="text"]{min-width:0}
-.grp input{background:var(--surface2);border:1px solid var(--border);border-radius:8px;
-  padding:8px 9px;font-family:'Space Mono',monospace;font-size:15px;width:100%;min-width:0}
+.grp input{
+  /* iOS impose une largeur intrinsèque aux champs d'heure : il faut la neutraliser,
+     sinon le champ dépasse la colonne de la grille. */
+  -webkit-appearance:none; appearance:none;
+  background:var(--surface2); border:1px solid var(--border); border-radius:8px;
+  padding:8px 6px; font-family:'Space Mono',monospace; font-size:15px;
+  width:100%; max-width:100%; min-width:0; display:block; text-align:center;
+}
+.grp input::-webkit-date-and-time-value{text-align:center;margin:0}
+.day-inputs>*{min-width:0;max-width:100%}
+/* Écrans très étroits (iPhone SE, mini) : un champ par ligne plutôt qu'un débordement. */
+@media (max-width:370px){
+  .day-inputs{grid-template-columns:1fr}
+  .summary{grid-template-columns:1fr 1fr}
+  .summary .item:last-child{grid-column:1 / -1}
+}
 .day-foot{font-size:12.5px;color:var(--muted);margin-top:9px}
 
 .champ{margin-bottom:14px}
