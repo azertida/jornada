@@ -534,11 +534,33 @@ function regimeDe(date){
 }
 
 /* Référence d'une journée : figée si la journée a déjà été encodée */
+/* Référence dictée par le régime en vigueur (horaire normal, été, ou période
+   exceptionnelle), sans tenir compte de ce qu'une fiche a pu figer. */
+function referenceRegime(date){
+  const r = regimeDe(date);
+  return r.jours.includes(date.getDay()) ? (r.repartition[date.getDay()] || 0) : 0;
+}
+
 function referenceDe(date){
   const j = etat.jours[cle(date)];
   if(j && typeof j.ref === "number") return j.ref;
-  const r = regimeDe(date);
-  return r.jours.includes(date.getDay()) ? (r.repartition[date.getDay()] || 0) : 0;
+  return referenceRegime(date);
+}
+
+/* Une journée encodée fige sa référence : c'est ce qui protège le passé quand
+   l'horaire change plus tard. Mais si c'est la période elle-même qu'on corrige
+   ou qu'on supprime, les journées qu'elle couvrait doivent suivre. */
+function dateDeCle(k){
+  const m = String(k).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return m ? new Date(+m[1], +m[2]-1, +m[3]) : null;
+}
+function rafraichirRefs(debut, fin){
+  if(!debut || !fin) return;
+  for(const k in etat.jours){
+    if(k < debut || k > fin) continue;
+    const d = dateDeCle(k);
+    if(d) etat.jours[k].ref = referenceRegime(d);
+  }
 }
 
 function pauseAppliquee(date){
@@ -1032,15 +1054,21 @@ document.getElementById("xEnregistrer").onclick = ()=>{
   if(!nom){ dire("Donne un intitulé à cette période."); return; }
   if(!debut || !fin){ dire("Dates attendues au format 06/07/2026."); return; }
   if(fin < debut){ dire("La date de fin précède la date de début."); return; }
+  const ancienne = etat.exceptions.find(x=>x.id === brouillon.id);
+  const aRafraichir = ancienne ? [[ancienne.debut, ancienne.fin]] : [];
   brouillon.nom = nom; brouillon.debut = debut; brouillon.fin = fin;
   const i = etat.exceptions.findIndex(x=>x.id === brouillon.id);
   if(i >= 0) etat.exceptions[i] = brouillon; else etat.exceptions.push(brouillon);
+  aRafraichir.push([debut, fin]);
+  aRafraichir.forEach(([a,b])=> rafraichirRefs(a,b));
   sauver(); fermerFeuilles(); rendreExceptions(); rendreSemaine();
   dire("Période enregistrée.");
 };
 
 document.getElementById("xSupprimer").onclick = ()=>{
+  const {debut, fin} = brouillon;
   etat.exceptions = etat.exceptions.filter(x=>x.id !== brouillon.id);
+  rafraichirRefs(debut, fin);
   sauver(); fermerFeuilles(); rendreExceptions(); rendreSemaine();
   dire("Période supprimée.");
 };
